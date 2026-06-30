@@ -11,6 +11,10 @@
 
 ---
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-View-00cfff?style=for-the-badge&logo=github)](https://htmlpreview.github.io/?https://github.com/Jubairalberune/Inertial-Navigation-System/blob/main/demo/ins_demo.html)
+
+---
+
 ## 🎯 Vision & Mission
 
 
