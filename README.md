@@ -595,7 +595,7 @@ The **[Technical Reference](firmware/Inertial%20Navigation%20System_cpp%20page.m
 
 ### ⚠️ Important Warning
 
-The **[Warning file](firmware/WARNING.md)** explains that the firmware is **for educational purposes only** – **NOT** for production, drones, or safety‑critical systems. **Please read it before using any code.**
+The **[Warning file](/firmware/WARNING.md)** explains that the firmware is **for educational purposes only** – **NOT** for production, drones, or safety‑critical systems. **Please read it before using any code.**
 
 ---
 
