@@ -1,0 +1,91 @@
+                                                       LiPo Battery (2S or 3S)
+                                                             ||||
+                                                              +
+                                                              |
+                                          +-------------------+-------------------+
+                                          |                                       |
+                                   [Balance Charger]                       [BMS protection]
+                                   (e.g., 2S/3S BMS)                         (if not built‑in)
+                                          |                                       |
+                                          +-----------+---------------------------+
+                                                      |
+                                                      +------> P+  (7.4V – 12.6V)
+                                                      |
+                                                +-----+-----+
+                                                |           |
+                                            [1000µF]    [1000µF]   (input bulk caps)
+                                                |           |
+                                                +-----+-----+
+                                                      |
+                                                [Boost Converter]
+                                                (MT3608 / XL6009)
+                                                      |
+                                                Adjust to 5.0V ±2%
+                                                      |
+                                           +----------+----------+
+                                           |          |          |
+                                         5V          5V          5V
+                                           |          |          |
+                                        [470µF]    [470µF]       |
+                                           |          |          |
+                                      +----+----------+----------+----+
+                                      |                               |
+                                ESP32 (Vin)                         GPS (NEO‑6M)
+                                      |                               |
+                                      |                           [1000µF] (on VCC)
+                                      |                               |
+                                      +--------+                      |
+                                      |        |                      |
+                                   [3.3V LDO]  |                      |
+                                   (AMS1117)   |                      |
+                                      |        |                      |
+                                    3.3V       |                      |
+                                      |        |                      |
+                                   [10µF]      |                      |
+                                      |        |                      |
+                                      +--------+----------------------+
+                                               |
+                                         I2C bus (SDA / SCL)
+                                               |
+                                   [4.7k] [4.7k] pull‑ups to 3.3V
+                                               |
+                     +-------------------------+-------------------------+
+                     |                         |                         |
+                 MPU6050                     BMP280                  QMC5883L
+                 (ADDR 0x68)              (ADDR 0x76)              (ADDR 0x0D)
+                     |                         |                         |
+                VCC→3.3V                   VCC→3.3V                  VCC→3.3V
+                 GND→GND                    GND→GND                   GND→GND
+                 SDA→SDA                    SDA→SDA                   SDA→SDA
+                 SCL→SCL                    SCL→SCL                   SCL→SCL
+                 AD0→GND                    ADDR→GND                   (no config)
+                     |                         |                         |
+                 [100nF]                   [100nF]                   [100nF]
+                 close to VCC              close to VCC              close to VCC
+                     |                         |                         |
+                     +-------------------------+-------------------------+
+                                               |
+                                    (Optional: level shifter
+                                     if GPS uses 5V logic?
+                                     NEO‑6M is 5V tolerant,
+                                     but TX is 5V. Use a 1k/2k divider
+                                     or 5V‑to‑3.3V level shifter.)
+                                               |
+                                          ESP32 GPIO16 (RX)
+                                          (GPS TX → GPIO16)
+                                               |
+                                          ESP32 GPIO17 (TX) – optional (not used)
+                                               |
+                                          GPS TX – also connect 1000µF on its 5V
+
+                     +------------------------------------------------------+
+                     |                                                      |
+                Status LEDs                                         Buzzer
+                GPIO4 ──[220R]──[LED_GPS]──GND                    GPIO26 ──[1k]──[NPN]──[Buzzer]+
+                GPIO5 ──[220R]──[LED_STATIC]──GND                          (collector)      |
+                GPIO2 ──[220R]──[LED_DRIFT]──GND                                 emitter──GND
+                                                                               base──[1k]──GPIO26
+                     |
+                NMEA Output to Pixhawk (optional)
+                ESP32 GPIO33 (TX2) ──> Pixhawk GPS port RX
+                ESP32 GPIO32 (RX2) ──< (unused, but connected for completeness)
