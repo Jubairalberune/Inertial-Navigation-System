@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>INS  – Complete Interactive Demo (No Hardware)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #060c10;
+            color: #b8dce8;
+            font-family: 'Segoe UI', monospace;
+            font-size: 13px;
+            padding: 8px;
+        }
+        h1 { color: #00cfff; text-align: center; font-size: 1.4rem; letter-spacing: 2px; padding: 6px 0; }
+        .sub { text-align: center; font-size: 0.75rem; color: #1e3a4a; margin-bottom: 8px; }
+        .card {
+            background: #09141c;
+            border: 1px solid #0c3050;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 10px;
+        }
+        .card-title {
+            font-size: 0.75rem;
+            color: #00cfff;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #0c3050;
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 0.8rem;
+        }
+        .label { color: #1e3a4a; }
+        .value { font-weight: bold; color: #00ff88; }
+        .vl { font-size: 0.85rem; font-weight: bold; }
+        .vc { color: #00cfff; }
+        .va { color: #ffb800; }
+        .vr { color: #ff3355; }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            background: #002a18;
+            border: 1px solid #00ff88;
+            color: #00ff88;
+        }
+        button, .btn {
+            background: transparent;
+            border: 1px solid #00cfff;
+            color: #00cfff;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: 0.2s;
+            margin: 2px 0;
+        }
+        button:hover {
+            background: #001a24;
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+        .btn-bg { background: #00ff8822; border-color: #00ff88; color: #00ff88; }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: #060c10;
+            border-radius: 6px;
+            border: 1px solid #0c3050;
+        }
+        .progress-bar {
+            height: 4px;
+            background: #0c3050;
+            border-radius: 2px;
+            margin: 6px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #00ff88;
+            width: 0%;
+            border-radius: 2px;
+            transition: width 0.2s;
+        }
+        .cal-step {
+            border: 1px solid #0c3050;
+            border-radius: 6px;
+            margin: 6px 0;
+            padding: 6px;
+        }
+        .cal-header {
+            font-weight: bold;
+            color: #00cfff;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+        .cal-body {
+            display: none;
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: #b8dce8;
+        }
+        .warning {
+            background: #150005;
+            border: 1px solid #ff3355;
+            color: #ff3355;
+            border-radius: 4px;
+            padding: 6px;
+            font-size: 0.7rem;
+            margin-bottom: 8px;
+        }
+        .info {
+            background: #001520;
+            border: 1px solid #00cfff;
+            color: #00cfff;
+            border-radius: 4px;
+            padding: 6px;
+            font-size: 0.7rem;
+            margin-bottom: 8px;
+        }
+        #LD, #SU, #DA { transition: opacity 0.2s; }
+        .led {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #1e3a4a;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .led.on { background: #00ff88; box-shadow: 0 0 4px #00ff88; }
+        footer {
+            text-align: center;
+            font-size: 0.65rem;
+            color: #1e3a4a;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>⚡ INS  – COMPLETE DEMO</h1>
+<div class="sub">No hardware required | Fully interactive simulation</div>
+
+<!-- LOADING SCREEN -->
+<div id="LD" style="text-align:center; padding:40px; color:#00cfff;">CONNECTING to INS ...</div>
+
+<!-- SETUP PANEL (SU) -->
+<div id="SU" style="display:none;">
+    <div class="card">
+        <div class="card-title">📡 AUTO-LEVEL CALIBRATION (60s)</div>
+        <div id="calWarning" class="warning">⚠️ DO NOT MOVE. Any orientation is accepted as "level".</div>
+        <div class="row"><span class="label">STATUS</span><span id="calStatus" class="value va">PENDING</span></div>
+        <div class="progress-bar"><div id="calFill" class="progress-fill"></div></div>
+        <div class="row"><span class="label">BARO ALT</span><span id="baroDemo" class="value vc">-- m</span></div>
+        <div class="row"><span class="label">TEMP</span><span id="tempDemo" class="value">-- °C</span></div>
+        <div class="row"><span class="label">PRESS</span><span id="pressDemo" class="value">-- hPa</span></div>
+    </div>
+
+    <!-- Calibration Wizard (appears after 60s) -->
+    <div id="calWiz" style="display:none;" class="card">
+        <div class="card-title">⚙️ SENSOR CALIBRATION WIZARD (optional)</div>
+        <div class="info">Complete any steps below for better precision. All are optional – click headers to see instructions.</div>
+        <div class="cal-step"><div class="cal-header" onclick="toggleCal(1)">① Accelerometer 6‑position (scale & offset)</div>
+            <div id="calBody1" class="cal-body">Place device in 6 orientations: flat, upside‑down, nose‑up, nose‑down, left side, right side. Press each button. <em>(Demo: non‑functional, illustrates layout)</em></div></div>
+        <div class="cal-step"><div class="cal-header" onclick="toggleCal(2)">② Gyroscope static bias + noise</div>
+            <div id="calBody2" class="cal-body">Hold still for 5s to measure residual bias and noise floor.</div></div>
+        <div class="cal-step"><div class="cal-header" onclick="toggleCal(3)">③ Compass N‑S‑E‑W (hard‑iron)</div>
+            <div id="calBody3" class="cal-body">Point device toward North, East, South, West, press respective buttons.</div></div>
+        <div class="cal-step"><div class="cal-header" onclick="toggleCal(4)">④ Velocity scale (walk 1 m)</div>
+            <div id="calBody4" class="cal-body">Walk exactly 1 m forward, press MARK. Calibrates distance factor.</div></div>
+        <div class="cal-step"><div class="cal-header" onclick="toggleCal(5)">⑤ Barometer altitude scale</div>
+            <div id="calBody5" class="cal-body">Set ground reference, then lift exactly 1 m to compute scale.</div></div>
+        <div class="cal-step"><div class="cal-header" onclick="toggleCal(6)">⑥ GPS origin sync</div>
+            <div id="calBody6" class="cal-body">Enter precise coordinates below and press SYNC to offset GPS.</div></div>
+    </div>
+
+    <!-- GPS status (setup) -->
+    <div class="card">
+        <div class="card-title">📡 NEO-6M GPS</div>
+        <div class="row"><span class="label">STATUS</span><span id="gpsSetupStatus" class="value va">SCANNING...</span></div>
+        <div class="row"><span class="label">SAT FIX</span><span id="gpsFixSetup" class="value">--</span></div>
+        <div class="row"><span class="label">BAUD</span><span id="gpsBaudSetup" class="value vc">9600</span></div>
+        <div class="row"><span class="label">SATS</span><span id="gpsSatsSetup" class="value">--</span></div>
+        <div class="demo-note" style="font-size:0.7rem; color:#1e3a4a;">In demo, GPS fix appears after 5 seconds.</div>
+    </div>
+
+    <!-- Date / Time -->
+    <div class="card">
+        <div class="card-title">📅 DATE / TIME</div>
+        <div style="display:flex; gap:6px;"><input type="text" id="dtInput" placeholder="YYYYMMDD_HHMMSS" style="flex:1; background:#09141c; border:1px solid #0c3050; color:#00ff88; padding:6px; border-radius:4px;"><button onclick="syncDateTime()">AUTO</button></div>
+    </div>
+
+    <!-- Target & Origin -->
+    <div class="card">
+        <div class="card-title">🎯 TARGET (optional)</div>
+        <input type="number" id="tgLat" placeholder="Target Lat" step="any" style="width:100%; background:#09141c; border:1px solid #0c3050; color:#00ff88; padding:6px; margin:4px 0;">
+        <input type="number" id="tgLon" placeholder="Target Lon" step="any" style="width:100%; background:#09141c; border:1px solid #0c3050; color:#00ff88; padding:6px; margin:4px 0;">
+        <input type="number" id="tgRad" placeholder="Radius m (default 10)" step="any" value="10" style="width:100%; background:#09141c; border:1px solid #0c3050; color:#00ff88; padding:6px;">
+    </div>
+
+    <button class="btn" onclick="usePhoneGPS()">📱 USE PHONE GPS FOR ORIGIN</button>
+    <input type="number" id="originLat" placeholder="Origin Latitude" step="any" style="width:100%; margin:6px 0; background:#09141c; border:1px solid #0c3050; color:#00ff88; padding:6px;">
+    <input type="number" id="originLon" placeholder="Origin Longitude" step="any" style="width:100%; margin:6px 0; background:#09141c; border:1px solid #0c3050; color:#00ff88; padding:6px;">
+    <input type="number" id="originAlt" placeholder="Altitude m MSL" step="any" style="width:100%; margin:6px 0; background:#09141c; border:1px solid #0c3050; color:#00ff88; padding:6px;">
+    <div style="margin:6px 0; display:flex; align-items:center; gap:8px;">
+        <input type="checkbox" id="gpsSyncCheck" checked style="width:auto;"> <label for="gpsSyncCheck" style="color:#00cfff;">Sync GPS to origin offset</label>
+    </div>
+    <hr>
+    <button id="startInsBtn" class="btn btn-bg" style="width:100%; padding:10px;">🚀 START INS</button>
+    <div id="msg" style="text-align:center; font-size:0.7rem; color:#ffb800; margin-top:6px;"></div>
+</div>
+
+<!-- DASHBOARD PANEL (DA) -->
+<div id="DA" style="display:none;">
+    <!-- Status bar -->
+    <div style="display:flex; justify-content:space-between; align-items:center; background:#09141c; border:1px solid #0c3050; border-radius:6px; padding:6px 10px; margin-bottom:8px;">
+        <span id="sysStatus" class="badge">GPS+INS</span>
+        <span id="gpsState" style="color:#ffb800;">GPS:OK</span>
+        <span id="clockDemo" style="color:#00cfff;">--:--:--</span>
+        <span id="uptimeDemo" style="color:#1e3a4a;">T+0s</span>
+        <button onclick="simulateReset()" style="padding:2px 8px; margin:0;">RESET</button>
+    </div>
+    <!-- LEDs -->
+    <div style="display:flex; gap:10px; justify-content:center; margin-bottom:8px;">
+        <span><span class="led" id="ledGps"></span> GPS</span>
+        <span><span class="led" id="ledStatic"></span> ZUPT</span>
+        <span><span class="led" id="ledDrift"></span> DRIFT</span>
+    </div>
+
+    <!-- Horizon + Compass -->
+    <div class="grid-2" style="margin-bottom:6px;">
+        <div class="card" style="padding:4px;"><div class="card-title">HORIZON</div><canvas id="horizonCanvas" width="150" height="100"></canvas></div>
+        <div class="card" style="padding:4px;"><div class="card-title">COMPASS</div><canvas id="compassCanvas" width="150" height="100"></canvas></div>
+    </div>
+    <div class="card" style="padding:4px;"><div class="card-title">TURN RATE</div><canvas id="turnCanvas" width="280" height="30"></canvas></div>
+
+    <!-- Live Trail Map -->
+    <div class="card">
+        <div class="card-title">LIVE TRAIL MAP <span style="display:flex; gap:4px;"><button onclick="mapZoomIn()">+</button><button onclick="mapZoomOut()">-</button><button onclick="mapClear()">CLR</button></span></div>
+        <canvas id="trailCanvas" width="290" height="160"></canvas>
+        <div id="mapScaleInfo" style="font-size:0.65rem; text-align:right;">scale: --</div>
+    </div>
+
+    <!-- Position / Velocity / Attitude tables -->
+    <div class="grid-2">
+        <div class="card"><div class="card-title">POSITION</div>
+            <div class="row"><span class="label">LAT</span><span id="posLat" class="value vc">--</span></div>
+            <div class="row"><span class="label">LON</span><span id="posLon" class="value vc">--</span></div>
+            <div class="row"><span class="label">ALT MSL</span><span id="posAlt" class="value">-- m</span></div>
+            <div class="row"><span class="label">BARO</span><span id="posBaro" class="value vc">-- m</span></div>
+        </div>
+        <div class="card"><div class="card-title">VELOCITY <button id="unitToggle" style="float:right; padding:2px 6px;">m/s</button></div>
+            <div class="row"><span class="label">NORTH</span><span id="velN" class="value">--</span></div>
+            <div class="row"><span class="label">EAST</span><span id="velE" class="value">--</span></div>
+            <div class="row"><span class="label">DOWN</span><span id="velD" class="value">--</span></div>
+            <div class="row"><span class="label">H-SPD</span><span id="velH" class="value">--</span></div>
+        </div>
+        <div class="card"><div class="card-title">ATTITUDE</div>
+            <div class="row"><span class="label">ROLL</span><span id="attRoll" class="value">-- deg</span></div>
+            <div class="row"><span class="label">PITCH</span><span id="attPitch" class="value">-- deg</span></div>
+            <div class="row"><span class="label">YAW</span><span id="attYaw" class="value vc">-- deg</span></div>
+            <div class="row"><span class="label">R-RATE</span><span id="attRrate" class="value">-- d/s</span></div>
+        </div>
+        <div class="card"><div class="card-title">ENVIRONMENT</div>
+            <div class="row"><span class="label">TEMP</span><span id="envTemp" class="value">-- °C</span></div>
+            <div class="row"><span class="label">hPa</span><span id="envPress" class="value vc">--</span></div>
+            <div class="row"><span class="label">STATIC</span><span id="staticFlag" class="value">NO</span></div>
+        </div>
+    </div>
+
+    <!-- GPS Details Panel -->
+    <div class="card">
+        <div class="card-title">GPS RECEIVER</div>
+        <div id="gpsDetailPanel" style="font-size:0.7rem;">
+            <div class="row"><span class="label">SATS</span><span id="gpsSats" class="value">--</span></div>
+            <div class="row"><span class="label">HDOP</span><span id="gpsHdop" class="value">--</span></div>
+            <div class="row"><span class="label">SPEED</span><span id="gpsSpeed" class="value">-- km/h</span></div>
+            <div class="row"><span class="label">COURSE</span><span id="gpsCourse" class="value">-- deg</span></div>
+            <div class="row"><span class="label">UTC</span><span id="gpsUtc" class="value">--</span></div>
+        </div>
+    </div>
+
+    <!-- Bump Test -->
+    <div class="card">
+        <div class="card-title">🚀 BUMP TEST (drift validation)</div>
+        <button id="bumpTestBtn" style="width:100%;">▶ START BUMP TEST</button>
+        <div id="bumpResult" style="display:none; margin-top:8px;">
+            <div class="row"><span class="label">Drift error:</span><span id="bumpErrorVal" class="value">--</span></div>
+            <div class="row"><span class="label">Diagnostic:</span><span id="bumpDiag" class="value">--</span></div>
+        </div>
+    </div>
+</div>
+
+<footer>⚡ Fully interactive simulation – no ESP32 needed. Calibration runs automatically, then you can start INS and see live‑like data.</footer>
+
+<script>
+    // ------------------- SIMULATION STATE -------------------
+    let calInterval = null;
+    let calProgress = 0;
+    let calDoneFlag = false;
+    let running = false;
+    let demoInterval = null;
+    let trailPoints = [{n:0, e:0}];
+    let mapScale = 10;
+    let unitIndex = 0; // 0=m/s, 1=km/h, 2=mph, 3=kn
+    const unitNames = ['m/s','km/h','mph','kn'];
+    const unitFactors = [1, 3.6, 2.23694, 1.94384];
+    let bumpActive = false;
+    let bumpStartPos = {lat:0, lon:0};
+
+    // Simulated data streams (will change over time)
+    let simData = {
+        lat: 48.8584, lon: 2.2945, alt: 45.2, baro: 44.8,
+        pn: 12.34, pe: -5.67,
+        vn: 0.02, ve: 0.01, vd: -0.01,
+        roll: 1.2, pitch: 2.5, yaw: 123,
+        heading: 123,
+        gx: -2.3, gy: 0.5, gz: -1.2,
+        temp: 24.3, press: 1012.4,
+        static: false,
+        gpsFix: false, gpsSats: 0, gpsHdop: 99,
+        gpsSpeed: 0, gpsCourse: 0,
+        utc: 143005
+    };
+
+    // Helper: update canvas drawings
+    function drawHorizon(roll, pitch) {
+        const canvas = document.getElementById('horizonCanvas');
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width = 150, h = canvas.height = 100;
+        const cx = w/2, cy = h/2;
+        ctx.clearRect(0,0,w,h);
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(roll * Math.PI/180);
+        const offset = pitch * 1.2;
+        ctx.fillStyle = '#003355';
+        ctx.fillRect(-w, -h, w*2, cy+offset);
+        ctx.fillStyle = '#2a1500';
+        ctx.fillRect(-w, -cy+offset, w*2, h);
+        ctx.strokeStyle = '#00ff88';
+        ctx.beginPath(); ctx.moveTo(-w, -offset); ctx.lineTo(w, -offset); ctx.stroke();
+        ctx.restore();
+        ctx.strokeStyle = '#ffb800';
+        ctx.beginPath(); ctx.moveTo(cx-15, cy); ctx.lineTo(cx-5, cy); ctx.moveTo(cx+5, cy); ctx.lineTo(cx+15, cy); ctx.stroke();
+        ctx.fillStyle = '#00ff88'; ctx.font = '8px monospace'; ctx.fillText(`R:${roll.toFixed(0)}° P:${pitch.toFixed(0)}°`, 4, 12);
+    }
+
+    function drawCompass(heading) {
+        const canvas = document.getElementById('compassCanvas');
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width = 150, h = canvas.height = 100;
+        const cx = w/2, cy = h/2+4, R = Math.min(cx, cy-4)-4;
+        ctx.clearRect(0,0,w,h);
+        ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2*Math.PI); ctx.fillStyle='#09141c'; ctx.fill(); ctx.strokeStyle='#0c3050'; ctx.stroke();
+        for(let i=0;i<36;i++){
+            let ang = i*10*Math.PI/180;
+            let r1 = R - (i%3===0?6:3), r2=R-1;
+            ctx.beginPath(); ctx.moveTo(cx+Math.sin(ang)*r1, cy-Math.cos(ang)*r1);
+            ctx.lineTo(cx+Math.sin(ang)*r2, cy-Math.cos(ang)*r2); ctx.stroke();
+        }
+        const dirs=['N','E','S','W'];
+        for(let i=0;i<4;i++){
+            let ang = i*90*Math.PI/180;
+            let r = R-10;
+            ctx.fillStyle = i===0?'#ff3355':'#b8dce8';
+            ctx.font='bold 8px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+            ctx.fillText(dirs[i], cx+Math.sin(ang)*r, cy-Math.cos(ang)*r);
+        }
+        let rad = heading * Math.PI/180;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx+Math.sin(rad)*(R-10), cy-Math.cos(rad)*(R-10));
+        ctx.strokeStyle='#ff3355'; ctx.lineWidth=2; ctx.stroke();
+        ctx.fillStyle='#00ff88'; ctx.font='7px monospace'; ctx.fillText(heading.toFixed(0)+'°', cx-12, cy-8);
+    }
+
+    function drawTurnRate(rate) {
+        const canvas = document.getElementById('turnCanvas');
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width = 280, h = canvas.height = 30;
+        const cx = w/2, cy = h/2;
+        ctx.clearRect(0,0,w,h);
+        for(let i=-3;i<=3;i++){
+            let x = cx + i*25;
+            ctx.beginPath(); ctx.moveTo(x, cy-6); ctx.lineTo(x, cy+6);
+            ctx.strokeStyle = i===0?'#00ff88':'#1e3a4a'; ctx.stroke();
+        }
+        let norm = Math.max(-8, Math.min(8, rate));
+        let pos = cx + norm*15;
+        ctx.fillStyle = Math.abs(rate)>1?'#ffb800':'#00ff88';
+        ctx.fillRect(pos-2, cy-5, 4, 10);
+        ctx.fillStyle='#00cfff'; ctx.font='7px monospace'; ctx.fillText(rate.toFixed(1)+'°/s', cx-15, cy+8);
+    }
+
+    function drawTrail() {
+        const canvas = document.getElementById('trailCanvas');
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width = 290, h = canvas.height = 160;
+        const cx = w/2, cy = h/2;
+        ctx.fillStyle='#060c10'; ctx.fillRect(0,0,w,h);
+        ctx.strokeStyle='#0c1a28';
+        for(let x=cx%mapScale; x<w; x+=mapScale){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+        for(let y=cy%mapScale; y<h; y+=mapScale){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+        if(trailPoints.length>1){
+            ctx.beginPath(); ctx.strokeStyle='#00ff88'; ctx.lineWidth=1.5;
+            ctx.moveTo(cx+trailPoints[0].e*mapScale, cy-trailPoints[0].n*mapScale);
+            for(let i=1;i<trailPoints.length;i++) ctx.lineTo(cx+trailPoints[i].e*mapScale, cy-trailPoints[i].n*mapScale);
+            ctx.stroke();
+        }
+        let last = trailPoints[trailPoints.length-1];
+        ctx.beginPath(); ctx.arc(cx+last.e*mapScale, cy-last.n*mapScale, 4, 0, 2*Math.PI);
+        ctx.fillStyle='#00cfff'; ctx.fill();
+        document.getElementById('mapScaleInfo').innerText = `scale: ${Math.round(50/mapScale)}m/50px`;
+    }
+    function addTrailPoint(n,e) { trailPoints.push({n,e}); if(trailPoints.length>500) trailPoints.shift(); drawTrail(); }
+    function mapZoomIn() { mapScale = Math.min(mapScale*1.2, 40); drawTrail(); }
+    function mapZoomOut() { mapScale = Math.max(mapScale/1.2, 2); drawTrail(); }
+    function mapClear() { trailPoints = [{n:0,e:0}]; drawTrail(); }
+
+    // Update dashboard with simulated live data (changes slightly each second)
+    function updateDashboard() {
+        if(!running) return;
+        // Slowly change roll/pitch/yaw for demonstration
+        simData.roll += (Math.random() - 0.5) * 0.5;
+        simData.roll = Math.max(-30, Math.min(30, simData.roll));
+        simData.pitch += (Math.random() - 0.5) * 0.4;
+        simData.pitch = Math.max(-20, Math.min(20, simData.pitch));
+        simData.yaw += (Math.random() - 0.5) * 2;
+        if(simData.yaw>360) simData.yaw-=360;
+        if(simData.yaw<0) simData.yaw+=360;
+        simData.heading = simData.yaw;
+        simData.gx = (Math.random() - 0.5)*3;
+        simData.gy = (Math.random() - 0.5)*2;
+        simData.gz = (Math.random() - 0.5)*4;
+        // Move trail forward slowly
+        simData.pn += (simData.vn * 0.2);
+        simData.pe += (simData.ve * 0.2);
+        addTrailPoint(simData.pn, simData.pe);
+        // Update UI
+        document.getElementById('posLat').innerHTML = simData.lat.toFixed(6);
+        document.getElementById('posLon').innerHTML = simData.lon.toFixed(6);
+        document.getElementById('posAlt').innerHTML = simData.alt.toFixed(1)+' m';
+        document.getElementById('posBaro').innerHTML = simData.baro.toFixed(1)+' m';
+        let factor = unitFactors[unitIndex];
+        document.getElementById('velN').innerHTML = (simData.vn * factor).toFixed(2)+' '+unitNames[unitIndex];
+        document.getElementById('velE').innerHTML = (simData.ve * factor).toFixed(2)+' '+unitNames[unitIndex];
+        document.getElementById('velD').innerHTML = (simData.vd * factor).toFixed(2)+' '+unitNames[unitIndex];
+        let hspd = Math.hypot(simData.vn, simData.ve);
+        document.getElementById('velH').innerHTML = (hspd * factor).toFixed(2)+' '+unitNames[unitIndex];
+        document.getElementById('attRoll').innerHTML = simData.roll.toFixed(1)+' deg';
+        document.getElementById('attPitch').innerHTML = simData.pitch.toFixed(1)+' deg';
+        document.getElementById('attYaw').innerHTML = simData.yaw.toFixed(1)+' deg';
+        document.getElementById('attRrate').innerHTML = simData.gx.toFixed(1)+' d/s';
+        document.getElementById('envTemp').innerHTML = simData.temp.toFixed(1)+' °C';
+        document.getElementById('envPress').innerHTML = simData.press.toFixed(1);
+        let staticText = simData.static ? 'YES' : 'NO';
+        document.getElementById('staticFlag').innerHTML = staticText;
+        // LEDs
+        document.getElementById('ledGps').className = simData.gpsFix ? 'led on' : 'led';
+        document.getElementById('ledStatic').className = simData.static ? 'led on' : 'led';
+        let drift = (!simData.static && !simData.gpsFix);
+        document.getElementById('ledDrift').className = drift ? 'led on' : 'led';
+        // GPS details
+        document.getElementById('gpsSats').innerHTML = simData.gpsSats;
+        document.getElementById('gpsHdop').innerHTML = simData.gpsHdop.toFixed(1);
+        document.getElementById('gpsSpeed').innerHTML = simData.gpsSpeed.toFixed(1)+' km/h';
+        document.getElementById('gpsCourse').innerHTML = simData.gpsCourse.toFixed(0);
+        let utcStr = String(simData.utc).padStart(6,'0');
+        document.getElementById('gpsUtc').innerHTML = utcStr.slice(0,2)+':'+utcStr.slice(2,4)+':'+utcStr.slice(4,6);
+        // Canvas redraw
+        drawHorizon(simData.roll, simData.pitch);
+        drawCompass(simData.heading);
+        drawTurnRate(simData.gz);
+        // Update time
+        let uptime = Math.floor((Date.now() - startTime)/1000);
+        document.getElementById('uptimeDemo').innerHTML = `T+${uptime}s`;
+    }
+
+    let startTime = 0;
+    function startDashboardSimulation() {
+        if(demoInterval) clearInterval(demoInterval);
+        startTime = Date.now();
+        // Simulate GPS fix after 2 seconds
+        setTimeout(() => {
+            simData.gpsFix = true;
+            simData.gpsSats = 8;
+            simData.gpsHdop = 1.2;
+            simData.gpsSpeed = 0.5;
+            simData.gpsCourse = 120;
+        }, 2000);
+        demoInterval = setInterval(updateDashboard, 1000);
+        updateDashboard();
+    }
+
+    // ------------------- CALIBRATION SIMULATION -------------------
+    function startCalibrationSimulation() {
+        calProgress = 0;
+        let stepTime = 200; // ms per 1% (60s = 60000ms)
+        calInterval = setInterval(() => {
+            calProgress++;
+            let percent = calProgress;
+            document.getElementById('calFill').style.width = percent + '%';
+            document.getElementById('calStatus').innerHTML = `RUNNING ${percent}%`;
+            if(calProgress >= 100) {
+                clearInterval(calInterval);
+                document.getElementById('calStatus').innerHTML = 'COMPLETE';
+                document.getElementById('calWarning').style.display = 'none';
+                document.getElementById('calWiz').style.display = 'block';
+                calDoneFlag = true;
+                // Simulate baro/temp readings
+                document.getElementById('baroDemo').innerHTML = '45.2 m';
+                document.getElementById('tempDemo').innerHTML = '24.3 °C';
+                document.getElementById('pressDemo').innerHTML = '1012.4 hPa';
+            }
+        }, 600); // 600ms per step = 60s total (600*100=60000)
+    }
+
+    // Setup: show LD, then after 1s show SU and start cal
+    window.onload = () => {
+        setTimeout(() => {
+            document.getElementById('LD').style.display = 'none';
+            document.getElementById('SU').style.display = 'block';
+            startCalibrationSimulation();
+            // Simulate GPS connection after a few seconds
+            setTimeout(() => {
+                document.getElementById('gpsSetupStatus').innerHTML = 'CONNECTED';
+                document.getElementById('gpsSetupStatus').className = 'value vc';
+                document.getElementById('gpsFixSetup').innerHTML = 'YES (3D)';
+                document.getElementById('gpsFixSetup').className = 'value vc';
+                document.getElementById('gpsSatsSetup').innerHTML = '8';
+            }, 4000);
+        }, 1500);
+    };
+
+    // Start INS button
+    document.getElementById('startInsBtn').onclick = () => {
+        if(!calDoneFlag) {
+            document.getElementById('msg').innerHTML = 'Wait for calibration to complete (60s).';
+            return;
+        }
+        let lat = document.getElementById('originLat').value;
+        let lon = document.getElementById('originLon').value;
+        let alt = document.getElementById('originAlt').value;
+        if(!lat || !lon || !alt) {
+            document.getElementById('msg').innerHTML = 'Fill origin fields (Lat, Lon, Alt).';
+            return;
+        }
+        running = true;
+        document.getElementById('SU').style.display = 'none';
+        document.getElementById('DA').style.display = 'block';
+        startDashboardSimulation();
+        // Set clock
+        let d = new Date();
+        document.getElementById('clockDemo').innerHTML = d.toLocaleTimeString();
+        setInterval(() => {
+            let d2 = new Date();
+            document.getElementById('clockDemo').innerHTML = d2.toLocaleTimeString();
+        }, 1000);
+    };
+
+    // Unit toggle
+    document.getElementById('unitToggle').onclick = () => {
+        unitIndex = (unitIndex+1)%4;
+        document.getElementById('unitToggle').innerHTML = unitNames[unitIndex];
+    };
+
+    // Bump test simulation
+    let bumpState = 0; // 0 idle, 1 waiting return
+    document.getElementById('bumpTestBtn').onclick = () => {
+        if(bumpState === 0) {
+            bumpState = 1;
+            document.getElementById('bumpTestBtn').innerHTML = '↩️ RETURN TO START';
+            document.getElementById('bumpTestBtn').style.background = '#002a18';
+            document.getElementById('bumpResult').style.display = 'none';
+            bumpStartPos = {lat: simData.lat, lon: simData.lon};
+        } else {
+            bumpState = 0;
+            document.getElementById('bumpTestBtn').innerHTML = '▶ START BUMP TEST';
+            document.getElementById('bumpTestBtn').style.background = '';
+            // Simulate drift error
+            let err = 0.12 + Math.random() * 0.2;
+            let diag = err < 0.1 ? 'EXCELLENT' : err < 0.3 ? 'GOOD' : err < 0.5 ? 'ACCEPTABLE' : 'POOR DRIFT';
+            document.getElementById('bumpErrorVal').innerHTML = err.toFixed(3) + ' m';
+            document.getElementById('bumpDiag').innerHTML = diag;
+            document.getElementById('bumpResult').style.display = 'block';
+        }
+    };
+
+    function simulateReset() {
+        running = false;
+        if(demoInterval) clearInterval(demoInterval);
+        location.reload();
+    }
+    function usePhoneGPS() {
+        if(navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+                document.getElementById('originLat').value = pos.coords.latitude.toFixed(7);
+                document.getElementById('originLon').value = pos.coords.longitude.toFixed(7);
+                if(pos.coords.altitude) document.getElementById('originAlt').value = pos.coords.altitude.toFixed(1);
+                document.getElementById('msg').innerHTML = 'Phone GPS acquired.';
+            }, err => { document.getElementById('msg').innerHTML = 'Geolocation error: '+err.message; });
+        } else {
+            document.getElementById('msg').innerHTML = 'Geolocation not supported.';
+        }
+    }
+    function syncDateTime() {
+        let d = new Date();
+        let str = d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'_'+
+                  String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+String(d.getSeconds()).padStart(2,'0');
+        document.getElementById('dtInput').value = str;
+    }
+    window.toggleCal = function(n) {
+        let body = document.getElementById('calBody'+n);
+        if(body.style.display === 'none' || body.style.display === '') body.style.display = 'block';
+        else body.style.display = 'none';
+    };
+    // expose functions globally
+    window.mapZoomIn = mapZoomIn;
+    window.mapZoomOut = mapZoomOut;
+    window.mapClear = mapClear;
+    window.usePhoneGPS = usePhoneGPS;
+    window.syncDateTime = syncDateTime;
+    window.simulateReset = simulateReset;
+</script>
+</body>
+</html>
